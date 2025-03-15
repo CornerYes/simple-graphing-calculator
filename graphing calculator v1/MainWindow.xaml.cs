@@ -26,8 +26,6 @@ namespace graphing_calculator_v1
         private string equation = "x * x";
         private Boolean failedlasttime = false;
 
-        int test = 0;
-
         public MainWindow()
         {
             InitializeComponent();
@@ -132,9 +130,6 @@ namespace graphing_calculator_v1
 
         private void update(object? sender, EventArgs e)
         {
-            test += 1;
-            scalename.Content = test.ToString();
-
             actualwindowX = this.ActualWidth / 2f;
             actualwindowY = this.ActualHeight / 2f;
 
@@ -190,7 +185,6 @@ namespace graphing_calculator_v1
                 failedlasttime = false;
                 string equationstring = input.Text;
                 drawboard.Focus();
-                Debug.WriteLine(equationstring);
                 equation = equationstring;
             }
         }
