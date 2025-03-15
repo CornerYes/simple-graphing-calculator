@@ -1,17 +1,12 @@
 ﻿
 using System.Diagnostics;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using static System.Formats.Asn1.AsnWriter;
-using NCalc;
 using System.Windows.Input;
-using System.Reflection.Metadata;
-using System.Windows.Media.Animation;
-using System.Windows.Threading;
-using static System.Net.Mime.MediaTypeNames;
-
+using System.Linq.Expressions;
+using Parlot.Fluent;
+using System.Windows.Controls;
 namespace graphing_calculator_v1
 {
 
@@ -26,15 +21,12 @@ namespace graphing_calculator_v1
         public double speed = 4f;
         private HashSet<Key> pressedkeys = new();
 
-        double xcanva = 0;
-        double ycanva = 0;
+        double actualwindowX = 0;
+        double actualwindowY = 0;
+        private string equation = "x * x";
+        private Boolean failedlasttime = false;
 
         int test = 0;
-        private static double equation(double x)
-        {
-            double y = (x * x);
-            return y;
-        }
 
         public MainWindow()
         {
@@ -44,7 +36,7 @@ namespace graphing_calculator_v1
         private void drawgrid()
         {
             double griscale = scale;
-            for (double x = (xcanva + xoffset) % griscale; x < drawboard.ActualWidth + xcanva; x += griscale)
+            for (double x = (actualwindowX + xoffset) % griscale; x < drawboard.ActualWidth + actualwindowX; x += griscale)
             {
                 Line vl = new Line
                 {
@@ -58,7 +50,7 @@ namespace graphing_calculator_v1
                 drawboard.Children.Add(vl);
             }
 
-            for (double y = (ycanva + yoffset) % griscale; y < drawboard.ActualHeight; y += griscale)
+            for (double y = (actualwindowY + yoffset) % griscale; y < drawboard.ActualHeight; y += griscale)
             {
                 Line hl = new Line
                 {
@@ -77,47 +69,65 @@ namespace graphing_calculator_v1
         {
             drawboard.Children.Clear();
             scalename.Content = "Scale: " + scale.ToString() + "x";
-            Polyline polyline = new Polyline();
-            polyline.Stroke = Brushes.Black;
+            if (failedlasttime == false) {
+                Polyline polyline = new Polyline();
+                polyline.Stroke = Brushes.Black;
 
-            drawgrid();
+                drawgrid();
 
-            double minX = (0 - xcanva - xoffset) / scale;
-            double maxX = (drawboard.ActualWidth - xcanva - xoffset) / scale;
+                double minX = (-actualwindowX - xoffset) / scale;
+                double maxX = (drawboard.ActualWidth - actualwindowX - xoffset) / scale;
 
-            double step = (maxX - minX) / drawboard.ActualWidth;
+                double step = (maxX - minX) / drawboard.ActualWidth;
 
-            for (double x = minX; x <= maxX; x += step)
-            {
-                double y = equation(x);
-                double screenX = xcanva + x * scale + xoffset;
-                double screenY = ycanva - y * scale + yoffset;
-                polyline.Points.Add(new Point(screenX, screenY));
+                var exp = new NCalc.Expression(equation);
+                exp.Parameters["x"] = 0;
+                for (double x = minX; x <= maxX; x += step)
+                {
+                    exp.Parameters["x"] = x;
+                    double y = 0;
+                    try
+                    {
+                        y = Convert.ToDouble(exp.Evaluate());
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine(ex.ToString());
+                        failedlasttime = true;
+                        break;
+                    }
+                    if (!double.IsNaN(y))
+                    {
+                        double screenX = actualwindowX + x * scale + xoffset;
+                        double screenY = actualwindowY - y * scale + yoffset;
+                        polyline.Points.Add(new Point(screenX, screenY));
+                    }
+                }
+                drawboard.Children.Add(polyline);
+
+                Line xa = new Line
+                {
+                    X1 = 0,
+                    Y1 = actualwindowY + yoffset,
+                    X2 = drawboard.ActualWidth,
+                    Y2 = actualwindowY + yoffset,
+                    Stroke = Brushes.Gray,
+                    Name = "XAxis"
+                };
+
+                Line ya = new Line
+                {
+                    X1 = actualwindowX + xoffset,
+                    Y1 = 0,
+                    X2 = actualwindowX + xoffset,
+                    Y2 = drawboard.ActualHeight,
+                    Stroke = Brushes.Gray,
+                    Name = "YAxis"
+                };
+
+                drawboard.Children.Insert(1, xa);
+                drawboard.Children.Insert(2, ya);
             }
-            drawboard.Children.Add(polyline);
-
-            Line xAxis = new Line
-            {
-                X1 = 0,
-                Y1 = ycanva + yoffset,
-                X2 = drawboard.ActualWidth,
-                Y2 = ycanva + yoffset,
-                Stroke = Brushes.Gray,
-                Name = "XAxis"
-            };
-
-            Line yAxis = new Line
-            {
-                X1 = xcanva + xoffset,
-                Y1 = 0,
-                X2 = xcanva + xoffset,
-                Y2 = drawboard.ActualHeight,
-                Stroke = Brushes.Gray,
-                Name = "YAxis"
-            };
-
-            drawboard.Children.Insert(1, xAxis);
-            drawboard.Children.Insert(2, yAxis);
         }
 
         private void update(object? sender, EventArgs e)
@@ -125,13 +135,16 @@ namespace graphing_calculator_v1
             test += 1;
             scalename.Content = test.ToString();
 
-            xcanva = this.ActualWidth / 2f;
-            ycanva = this.ActualHeight / 2f;
+            actualwindowX = this.ActualWidth / 2f;
+            actualwindowY = this.ActualHeight / 2f;
 
-            if (pressedkeys.Contains(Key.W)) yoffset += speed;
-            if (pressedkeys.Contains(Key.S)) yoffset -= speed;
-            if (pressedkeys.Contains(Key.A)) xoffset += speed;
-            if (pressedkeys.Contains(Key.D)) xoffset -= speed;
+            if (input.IsFocused == false)
+            {
+                if (pressedkeys.Contains(Key.W)) yoffset += speed;
+                if (pressedkeys.Contains(Key.S)) yoffset -= speed;
+                if (pressedkeys.Contains(Key.A)) xoffset += speed;
+                if (pressedkeys.Contains(Key.D)) xoffset -= speed;
+            }
 
             updategraph();
         }
@@ -142,15 +155,17 @@ namespace graphing_calculator_v1
 
         private void Window_MouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
         {
+            double rate = 0.5f;
             if (e.Delta > 0)
             {
                 scale += (zoomrate + (scale / 10));
+                xoffset += (actualwindowX - Mouse.GetPosition(drawboard).X) * rate;
+                yoffset += (actualwindowY - Mouse.GetPosition(drawboard).Y) * rate;
             }
             else
             {
                 scale = Math.Clamp(scale - (zoomrate + (scale / 10)), 10f, 10000);
             }
-            updategraph();
         }
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
@@ -169,13 +184,15 @@ namespace graphing_calculator_v1
             }
         }
 
-        private void TextBox_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        private void TextBox_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == System.Windows.Input.Key.Enter) {
+            if (e.Key == Key.Enter) {
+                failedlasttime = false;
                 string equationstring = input.Text;
+                drawboard.Focus();
                 Debug.WriteLine(equationstring);
+                equation = equationstring;
             }
         }
-
     }
 }

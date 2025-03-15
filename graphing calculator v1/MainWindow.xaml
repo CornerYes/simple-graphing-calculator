@@ -11,9 +11,9 @@
         KeyDown="Window_KeyDown"
         KeyUp="Window_KeyUp">
     <Grid>
-        <Canvas Name="drawboard" Background="White"></Canvas>
+        <Canvas Name="drawboard" Background="White" Focusable="True"></Canvas>
         <Label Content="Label" HorizontalAlignment="Left" VerticalAlignment="Bottom" Name ="scalename"/>
-        <TextBox HorizontalAlignment="Left" TextWrapping="Wrap" Text="TextBox" FontSize="20" TextAlignment="Left" VerticalAlignment="Top" Width="150" Height="34" Margin="0,10,0,0" KeyDown="TextBox_KeyDown" Name="input"/>
+        <TextBox HorizontalAlignment="Left" TextWrapping="Wrap" Text="x*x" FontSize="20" TextAlignment="Left" VerticalAlignment="Top" Width="150" Height="34" Margin="0,10,0,0" KeyDown="TextBox_KeyDown" Name="input" />
         <Border Name="hiddenFocusTarget" Focusable="True" Visibility="Collapsed"/>
         
     </Grid>
