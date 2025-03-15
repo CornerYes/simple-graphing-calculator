@@ -6,24 +6,31 @@ using System.Windows.Media;
 using System.Windows.Shapes;
 using static System.Formats.Asn1.AsnWriter;
 using NCalc;
+using System.Windows.Input;
+using System.Reflection.Metadata;
+using System.Windows.Media.Animation;
+using System.Windows.Threading;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace graphing_calculator_v1
 {
 
     public partial class MainWindow : Window
     {
-        public double length = 20f;
-        public double scale = 40f;
-        public double zoomrate = 2.5f;
+        private double scale = 40f;
+        private double zoomrate = 2.5f;
 
-        public double xoffset = 0;
-        public double yoffset = 0;
+        private double xoffset = 0;
+        private double yoffset = 0;
 
         public double speed = 4f;
+        private HashSet<Key> pressedkeys = new();
 
         double xcanva = 0;
         double ycanva = 0;
-        public static double equation(double x)
+
+        int test = 0;
+        private static double equation(double x)
         {
             double y = (x * x);
             return y;
@@ -31,18 +38,7 @@ namespace graphing_calculator_v1
 
         public MainWindow()
         {
-            InitializeComponent();  
-        }
-
-        private void Window_MouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
-        {
-            if (e.Delta > 0) {
-                scale += (zoomrate + (scale / 10));
-            } else
-            {
-                scale = Math.Clamp(scale - (zoomrate + (scale / 10)), 10f, 10000);
-            }
-            updategraph();
+            InitializeComponent();
         }
 
         private void drawgrid()
@@ -124,37 +120,62 @@ namespace graphing_calculator_v1
             drawboard.Children.Insert(2, yAxis);
         }
 
+        private void update(object? sender, EventArgs e)
+        {
+            test += 1;
+            scalename.Content = test.ToString();
+
+            xcanva = this.ActualWidth / 2f;
+            ycanva = this.ActualHeight / 2f;
+
+            if (pressedkeys.Contains(Key.W)) yoffset += speed;
+            if (pressedkeys.Contains(Key.S)) yoffset -= speed;
+            if (pressedkeys.Contains(Key.A)) xoffset += speed;
+            if (pressedkeys.Contains(Key.D)) xoffset -= speed;
+
+            updategraph();
+        }
         private void WindowLoaded(object sender, RoutedEventArgs e)
         {
-
-            xcanva = this.ActualWidth / 2f;
-            ycanva = this.ActualHeight / 2f;
-            updategraph();
+            CompositionTarget.Rendering += update;
         }
 
-        private void Window_SizeChanged(object sender, SizeChangedEventArgs e) {
-            xcanva = this.ActualWidth / 2f;
-            ycanva = this.ActualHeight / 2f;
-            updategraph();
-        }
-
-        private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        private void Window_MouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
         {
-            if (e.Key == System.Windows.Input.Key.W)
+            if (e.Delta > 0)
             {
-                yoffset += speed;
-            } else if (e.Key == System.Windows.Input.Key.S) {
-                yoffset -= speed;
+                scale += (zoomrate + (scale / 10));
             }
-            
-            if (e.Key == System.Windows.Input.Key.A) {
-                xoffset += speed;
-            } else if (e.Key == System.Windows.Input.Key.D)
-            { 
-                xoffset -= speed;
+            else
+            {
+                scale = Math.Clamp(scale - (zoomrate + (scale / 10)), 10f, 10000);
             }
-
             updategraph();
         }
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (!pressedkeys.Contains(e.Key))
+            {
+                pressedkeys.Add(e.Key);
+            }
+
+        }
+
+        private void Window_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (pressedkeys.Contains(e.Key))
+            {
+                pressedkeys.Remove(e.Key);
+            }
+        }
+
+        private void TextBox_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Enter) {
+                string equationstring = input.Text;
+                Debug.WriteLine(equationstring);
+            }
+        }
+
     }
 }

@@ -7,11 +7,14 @@
         mc:Ignorable="d"
         Title="graphing calclator" Height="450" Width="800"
         Loaded="WindowLoaded"
-        SizeChanged="Window_SizeChanged"
         MouseWheel="Window_MouseWheel"
-        KeyDown="Window_KeyDown">
+        KeyDown="Window_KeyDown"
+        KeyUp="Window_KeyUp">
     <Grid>
         <Canvas Name="drawboard" Background="White"></Canvas>
         <Label Content="Label" HorizontalAlignment="Left" VerticalAlignment="Bottom" Name ="scalename"/>
+        <TextBox HorizontalAlignment="Left" TextWrapping="Wrap" Text="TextBox" FontSize="20" TextAlignment="Left" VerticalAlignment="Top" Width="150" Height="34" Margin="0,10,0,0" KeyDown="TextBox_KeyDown" Name="input"/>
+        <Border Name="hiddenFocusTarget" Focusable="True" Visibility="Collapsed"/>
+        
     </Grid>
 </Window>
