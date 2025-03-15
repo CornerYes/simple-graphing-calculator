@@ -13,6 +13,7 @@
     <Grid>
         <Canvas Name="drawboard" Background="White" Focusable="True"></Canvas>
         <Label Content="Label" HorizontalAlignment="Left" VerticalAlignment="Top" Name ="scalename"/>
+        <Label Content="Label" HorizontalAlignment="Left" VerticalAlignment="Top" Name ="stepname" Margin="0,26,0,0"/>
         <Label Content="Type your equations Here" HorizontalAlignment="Left" VerticalAlignment="Bottom" Height="33" Margin="10,0,0,73" Width="183" FontSize="15"/>
         <TextBox HorizontalAlignment="Left" TextWrapping="Wrap" Text="x*x" FontSize="15" TextAlignment="Left" VerticalAlignment="Bottom" Width="338" Height="73" Margin="0,0,0,0" KeyDown="TextBox_KeyDown" Name="input" />
         <Border Name="hiddenFocusTarget" Focusable="True" Visibility="Collapsed"/>

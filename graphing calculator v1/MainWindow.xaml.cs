@@ -12,7 +12,7 @@ namespace graphing_calculator_v1
 
     public partial class MainWindow : Window
     {
-        private double scale = 40f;
+        private double scale = 10f;
         private double zoomrate = 2.5f;
 
         private double xoffset = 0;
@@ -76,19 +76,28 @@ namespace graphing_calculator_v1
                 double minX = (-actualwindowX - xoffset) / scale;
                 double maxX = (drawboard.ActualWidth - actualwindowX - xoffset) / scale;
 
-                double step = (maxX - minX) / drawboard.ActualWidth;
+                double step = (maxX - minX) / drawboard.ActualWidth * 0.5;
+                stepname.Content = "Step Count: " + step.ToString();
 
                 var exp = new NCalc.Expression(equation);
-                
+                var exp2 = new NCalc.Expression(equation);
+
                 for (double x = minX; x <= maxX; x += step)
                 {
                     exp.Parameters["x"] = x;
                     exp.Parameters["pi"] = Math.PI;
                     exp.Parameters["e"] = Math.E;
+
+                    exp2.Parameters["x"] = x + step;
+                    exp2.Parameters["pi"] = Math.PI;
+                    exp2.Parameters["e"] = Math.E;
                     double y = 0;
+                    double nexty = 0;
+
                     try
                     {
                         y = Convert.ToDouble(exp.Evaluate());
+                        nexty = Convert.ToDouble(exp2.Evaluate());
                     }
                     catch (Exception ex)
                     {
@@ -96,12 +105,20 @@ namespace graphing_calculator_v1
                         failedlasttime = true;
                         break;
                     }
+
+                    if ((actualwindowY - y * scale + yoffset) - (actualwindowY - nexty * scale + yoffset) > drawboard.ActualHeight)
+                    {
+                        drawboard.Children.Add(polyline);
+                        polyline = new Polyline();
+                        polyline.Stroke = Brushes.Black;
+                    }
+
                     if (!double.IsNaN(y))
                     {
                         double screenX = actualwindowX + x * scale + xoffset;
                         double screenY = actualwindowY - y * scale + yoffset;
                         polyline.Points.Add(new Point(screenX, screenY));
-                    }
+                    }                  
                 }
                 drawboard.Children.Add(polyline);
 
@@ -112,7 +129,8 @@ namespace graphing_calculator_v1
                     X2 = drawboard.ActualWidth,
                     Y2 = actualwindowY + yoffset,
                     Stroke = Brushes.Gray,
-                    Name = "XAxis"
+                    Name = "XAxis",
+                    StrokeThickness = 2
                 };
 
                 Line ya = new Line
@@ -122,13 +140,15 @@ namespace graphing_calculator_v1
                     X2 = actualwindowX + xoffset,
                     Y2 = drawboard.ActualHeight,
                     Stroke = Brushes.Gray,
-                    Name = "YAxis"
+                    Name = "YAxis",
+                    StrokeThickness = 2
                 };
 
                 drawboard.Children.Insert(1, xa);
                 drawboard.Children.Insert(2, ya);
             }
         }
+
 
         private void update(object? sender, EventArgs e)
         {
@@ -193,5 +213,21 @@ namespace graphing_calculator_v1
                 equation = equationstring;
             }
         }
+
+        private void drawpixel(double x, double y, SolidColorBrush color)
+        {
+            Rectangle pixel = new Rectangle
+            {
+                Width = 1,
+                Height = 1,
+                Fill = color
+            };
+
+            Canvas.SetLeft(pixel, x);
+            Canvas.SetTop(pixel, y);
+
+            drawboard.Children.Add(pixel);
+        }
+
     }
 }
