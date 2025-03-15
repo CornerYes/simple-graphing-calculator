@@ -79,10 +79,12 @@ namespace graphing_calculator_v1
                 double step = (maxX - minX) / drawboard.ActualWidth;
 
                 var exp = new NCalc.Expression(equation);
-                exp.Parameters["x"] = 0;
+                
                 for (double x = minX; x <= maxX; x += step)
                 {
                     exp.Parameters["x"] = x;
+                    exp.Parameters["pi"] = Math.PI;
+                    exp.Parameters["e"] = Math.E;
                     double y = 0;
                     try
                     {
@@ -90,7 +92,7 @@ namespace graphing_calculator_v1
                     }
                     catch (Exception ex)
                     {
-                        Debug.WriteLine(ex.ToString());
+                        errortext.Text = ex.Message;
                         failedlasttime = true;
                         break;
                     }
@@ -182,7 +184,10 @@ namespace graphing_calculator_v1
         private void TextBox_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter) {
-                failedlasttime = false;
+                if (failedlasttime == true) {
+                    errortext.Text = " ";
+                    failedlasttime = false;
+                }
                 string equationstring = input.Text;
                 drawboard.Focus();
                 equation = equationstring;
